@@ -1,3 +1,3 @@
 ## board code
 
-Train your board code.
+Exercise your board code.
