@@ -38,7 +38,7 @@ func (s *server) handleImage(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
 		return
 	}
-	code, err := image2text(req.Image)
+	code, err := ocr(req.Image)
 	if err != nil {
 		log.Printf("error image orc request: %v", err)
 		http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
@@ -65,4 +65,17 @@ func (s *server) handleImage(w http.ResponseWriter, r *http.Request) {
 		log.Printf("io.Copy(w, &buf): %v", err)
 		return
 	}
+}
+
+func (s *server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	if r.Header.Get("X-Forwarded-Proto") == "http" {
+		r.URL.Scheme = "https"
+		r.URL.Host = r.Host
+		http.Redirect(w, r, r.URL.String(), http.StatusFound)
+		return
+	}
+	if r.Header.Get("X-Forwarded-Proto") == "https" {
+		w.Header().Set("Strict-Transport-Security", "max-age=31536000; preload")
+	}
+	s.mux.ServeHTTP(w, r)
 }
