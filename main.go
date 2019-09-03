@@ -14,7 +14,7 @@ var (
 
 func main() {
 	version := flag.Bool("version", false, "build version")
-	host := flag.String("host", "", "listen address")
+	host := flag.String("host", "0.0.0.0:9981", "listen address")
 	flag.Parse()
 	if *version {
 		fmt.Printf("Version: %s Build: %s\nGo Version: %s\nGo OS/ARCH: %s %s\n", Version, Build, runtime.Version(), runtime.GOOS, runtime.GOARCH)

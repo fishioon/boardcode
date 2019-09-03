@@ -1,9 +1,10 @@
 package main
 
 import (
-	"bytes"
 	"encoding/json"
+	"log"
 	"net/http"
+	"net/url"
 )
 
 type event struct {
@@ -22,7 +23,9 @@ type compile struct {
 }
 
 func play(code string) (string, error) {
-	resp, err := http.Post("https://play.golang.org/compile", "application/x-www-form-urlencoded; charset=UTF-8", bytes.NewBufferString(code))
+	log.Printf("code: %s", code)
+	req := url.Values{"body": {code}, "withVet": {"true"}, "version": {"2"}}
+	resp, err := http.PostForm("https://play.golang.org/compile", req)
 	if err != nil {
 		return "", err
 	}
@@ -30,5 +33,6 @@ func play(code string) (string, error) {
 	if err = json.NewDecoder(resp.Body).Decode(&res); err != nil {
 		return "", err
 	}
+	log.Printf("compile: %+v", res)
 	return res.Events[0].Message, nil
 }

@@ -9,11 +9,19 @@ import (
 )
 
 type server struct {
-	mux *http.ServeMux
+	mux  *http.ServeMux
+	tess *Tess
 }
 
 func newServer() (*server, error) {
-	return nil, nil
+	t, err := NewTess()
+	if err != nil {
+		return nil, err
+	}
+	s := &server{mux: http.NewServeMux(), tess: t}
+
+	s.init()
+	return s, nil
 }
 
 type response struct {
@@ -24,6 +32,7 @@ type response struct {
 
 func (s *server) init() {
 	s.mux.HandleFunc("/compile/image", s.handleImage)
+	s.mux.HandleFunc("/compile/code", s.handleCode)
 
 	staticHandler := http.StripPrefix("/static/", http.FileServer(http.Dir("./static")))
 	s.mux.Handle("/static/", staticHandler)
@@ -38,7 +47,7 @@ func (s *server) handleImage(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
 		return
 	}
-	code, err := ocr(req.Image)
+	code, err := s.tess.Image2text(req.Image)
 	if err != nil {
 		log.Printf("error image orc request: %v", err)
 		http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
@@ -49,6 +58,39 @@ func (s *server) handleImage(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Printf("error decoding request: %v", err)
 		http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
+	}
+	resp := &response{
+		Data: &struct {
+			Compile string `json:"compile"`
+		}{res},
+	}
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(resp); err != nil {
+		log.Printf("error encoding response: %v", err)
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return
+	}
+	if _, err := io.Copy(w, &buf); err != nil {
+		log.Printf("io.Copy(w, &buf): %v", err)
+		return
+	}
+}
+
+func (s *server) handleCode(w http.ResponseWriter, r *http.Request) {
+	req := struct {
+		Code string `json:"code"`
+	}{}
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		log.Printf("error decoding request: %v", err)
+		http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
+		return
+	}
+
+	res, err := play(req.Code)
+	if err != nil {
+		log.Printf("error decoding request: %v", err)
+		http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
+		return
 	}
 	resp := &response{
 		Data: &struct {
