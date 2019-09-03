@@ -15,5 +15,5 @@ make
 
 ``` shell
 ./boardcode &
-curl --upload-file ~/Downloads/hello.png 127.0.0.1:9981/compile/image
+curl --upload-file testdata/hello.png 127.0.0.1:9981/compile/image
 ```
