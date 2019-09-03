@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"io"
+	"io/ioutil"
 	"log"
 	"net/http"
 )
@@ -39,15 +40,22 @@ func (s *server) init() {
 }
 
 func (s *server) handleImage(w http.ResponseWriter, r *http.Request) {
-	req := struct {
-		Image []byte `json:"image"`
-	}{}
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		log.Printf("error decoding request: %v", err)
-		http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
-		return
+	/*
+		req := struct {
+			Image []byte `json:"image"`
+		}{}
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+			log.Printf("error decoding request: %v", err)
+			http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
+			return
+		}
+	*/
+	b, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		log.Fatal(err)
 	}
-	code, err := s.tess.Image2text(req.Image)
+
+	code, err := s.tess.Image2text(b)
 	if err != nil {
 		log.Printf("error image orc request: %v", err)
 		http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
