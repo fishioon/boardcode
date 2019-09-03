@@ -4,7 +4,7 @@ Exercise your board code.
 
 
 ## build
-// only test on macos
+only test on macos
 ```shell
 brew install tesseract
 make
