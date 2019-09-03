@@ -12,6 +12,8 @@ make
 ```
 
 ## usage
-./boardcode &
 
+``` shell
+./boardcode &
 curl --upload-file ~/Downloads/hello.png 127.0.0.1:9981/compile/image
+```
